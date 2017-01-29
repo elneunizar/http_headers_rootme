@@ -3,13 +3,13 @@ import urllib2
 import re
 import sys, getopt
 #Get method to get the page
-URL="http://challenge01.root-me.org/web-serveur/ch5/"
-def request():
-    req=urllib2.Request(URL)
+host=""
+def request(host):
+    req=urllib2.Request(host)
     return req
 
-def getpage():
-    req=request()
+def getpage(host):
+    req=request(host)
     res=urllib2.urlopen(req)
     the_page=res.read()
     #read the header information
@@ -18,7 +18,8 @@ def getpage():
     return header
 
 def mod_header(e,v):
-    req=request()
+    global host
+    req=request(host)
     req.add_header(e,v)
     res=urllib2.urlopen(req)
     header=res.info()
@@ -27,20 +28,28 @@ def mod_header(e,v):
     return header
 
 def main(argv):
+    global host
     try:
-        opts,args=getopt.getopt(argv,"he:v:",["help=","element=","value="])
-        getpage()
+        opts,args=getopt.getopt(argv,"ht:ga:",["help=","target=","get=","add="])
     except getopt.GetoptError:
-        print 'http_header.py -e [argument] [value]'
+        print 'http_header.py -t -a|-g [argument=value]|[host-address]|[get'
         sys.exit()
     for opt, arg in opts:
         if opt in ("-h","--help"):
-            print 'http_header.py -e [argument] [value]'
-        elif opt in ("-e","--element"):
-            e=arg
-        elif opt in ("-v","--value"):
-            v=arg
-    if (e !='' and v!=''):
-            mod_header(e,v)
+            print 'http_header.py -t -a|-g [argument=value]|[host-address]'
+        elif opt in ("-t","--target"):
+            host=str(arg)
+        elif opt in ("-g","--get"):
+            if(host!=""):
+                getpage(host)
+            else:
+                print 'http_header.py -t -a|-g [argument=value]|[host-address]'
+        elif opt in ("-a","--add"):
+            if(re.search("=",arg).group()!="" and host!=""):
+                all_arg=arg.split('=')
+                mod_header(all_arg[0],all_arg[1])
+            else:
+                print 'http_header.py -t -a|-g [argument=value]|[host-address]'
+                sys.exit()
 if __name__ == "__main__":
     main(sys.argv[1:])
